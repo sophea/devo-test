@@ -1,0 +1,28 @@
+EXERCISE 2
+
+Given 3 data sets, you are required to create a web page that can read the 3 data sources through
+ajax, and displays 2 highcharts graphs, a line graph with date on X-axis with as many series as categories,
+and a pie chart per category, grouping the total data (sum of values by each category).
+The sources have temporary information ; a date, category and a value. The series must be combined
+in a way that if there is data in more than one series for a same date and category, these will be added.
+The categories must be normalized in order to have them all in capital letters, “Cat 1” and “cat 1” are
+equivalent to “CAT 1”
+Series 1 contains data in the following format :
+{"d":1435708800000,"cat":"Cat 1","value":832.803815816826}
+d is the date in milliseconds, cat is the category and value is the value that is available in
+http://s3.amazonaws.com/logtrust-static/test/test/data1.json
+Series 2 contains data in the following format :
+{"myDate":"2015-06-02","categ":"CAT 1","val":46.300059172697175}
+mydate is the date in YYYY-MM-DD format, categ is the category and val is the the value that is
+available in http://s3.amazonaws.com/logtrust-static/test/test/data2.json
+
+Series 3 contains data in the following format :
+{"raw":"9OHbc9 O1 WHTxiBPa auwZIVD6 j8jMWWVH UdB6hy 2015-06-18 XF 5xhcx15DD sbYFRPn
+dyoH1OOIF 6meHw pANknwa2h T imhs24gR5 #cat 1#","val":39.38690127513058}
+raw contains data in raw with words, the date with YYYY-MM-DD format and the category between #,
+a processing of the raw should be performed to obtain the date and category. Val is the value. In the
+example, the date would be 2015-06-18 and the normalized category CAT 1. It is available in
+http://s3.amazonaws.com/logtrust-static/test/test/data3.json
+The use of libraries for problem solving is permitted.
+The line graph should be similar to the below image but using the corresponding data and categories
+of the provided data
