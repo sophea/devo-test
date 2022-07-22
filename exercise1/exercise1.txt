@@ -8,7 +8,22 @@ example 6 = 1+2+3
 Please use Python 3.5 or higher. The use of external libraries that obtain number classification is not
 permitted
 
-
 ###
 ## call from command line
-##: python3 index.py classify 6
+#: python3 index.py classify 6
+python3 index.py classify 6
+sum divisors from 6 value is 6
+6 is perfect number
+
+$python3 index.py classify 28
+sum divisors from 28 value is 28
+28 is perfect number
+
+$ python3 index.py classify 12
+sum divisors from 12 value is 16
+12 is abundant number
+
+$python3 index.py classify 121
+sum divisors from 121 value is 12
+121 is deficient number
+

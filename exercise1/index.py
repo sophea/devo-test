@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+#
 # Create a function in python that can indicate if each number from a provided list of numbers, is a perfect, abundant, or defective number.
 # • A perfect number is one that is equal to the sum of its positive proper divisors, excluding itself. For example 6 = 1+2+3
 # • An abundant number is one in which the sum of the proper divisors is greater than the number.
