@@ -7,6 +7,7 @@ The sources have temporary information ; a date, category and a value. The serie
 in a way that if there is data in more than one series for a same date and category, these will be added.
 The categories must be normalized in order to have them all in capital letters, “Cat 1” and “cat 1” are
 equivalent to “CAT 1”
+
 Series 1 contains data in the following format :
 {"d":1435708800000,"cat":"Cat 1","value":832.803815816826}
 d is the date in milliseconds, cat is the category and value is the value that is available in
@@ -26,3 +27,6 @@ http://s3.amazonaws.com/logtrust-static/test/test/data3.json
 The use of libraries for problem solving is permitted.
 The line graph should be similar to the below image but using the corresponding data and categories
 of the provided data
+
+
+https://www.w3schools.com/js/tryit.asp?filename=tryai_chartjs_pie

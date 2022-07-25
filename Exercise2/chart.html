@@ -5,7 +5,7 @@
 <canvas id="myChart" style="width:100%;max-width:600px"></canvas>
 
 <script>
-
+  //Color list
   var COLORS = [
     '#4dc9f6',
     '#f67019',
@@ -25,7 +25,7 @@
     this.value = value;
   };
 
-  /**format date*/
+  /**format date yyyy-mm-dd*/
   function formatDate(date) {
     var d = new Date(date),
         month = '' + (d.getMonth() + 1),
@@ -39,14 +39,10 @@
 
     return [year, month, day].join('-');
   }
-
+  //All myObjects [{cat,date,value}}
   var myObjects = []
 
-  var value ="CcoeoNR8 T4VSBd0GC fpAepuTD 5A40zJ6 y5bXBb rRxM 2015-06-08 J KA9FicdV BSbvirf #CAT 2#"
-  date_regex = "\d{4}\-(0?[1-9]|1[012])\-(0?[1-9]|[12][0-9]|3[01])";
- // var result =date_regex.test(value);
-  //console.log("date_regex " + result)
-
+  // parse Date value "CcoeoNR8 T4VSBd0GC fpAepuTD 5A40zJ6 y5bXBb rRxM 2015-06-08 J KA9FicdV BSbvirf #CAT 2#"
   function parseRawToDate(value) {
     result = value.split(/\d{4}-\d{2}-\d{2}/);
     var yyyyMMdd=''
@@ -68,11 +64,18 @@
       }
      // console.log(item)
     }
-
   }
-//  var cat = parseRawCat(value)
-//  console.log("CAT ====="  + cat)
 
+  function getFields(input, field) {
+    var output = [];
+    for (var i = 0; i < input.length; ++i) {
+      output.push(input[i][field]);
+    }
+    return output;
+  }
+
+
+  //get datasource 3
   function getDS3(url) {
     var xhttp = new XMLHttpRequest();
     xhttp.open("GET", url, false);
@@ -85,13 +88,13 @@
           return new MyObject(parseRawCat(item.raw), parseRawToDate(item.raw), item.val);
 
         });
-        myObjects.push(ds3);
-
+        myObjects.push(ds3); // push result into objects
       }
     }
     xhttp.send();
   }
 
+  //get datasource 2
   function getDS2(url) {
     var xhttp2 = new XMLHttpRequest();
     xhttp2.open("GET", url, false);
@@ -113,10 +116,11 @@
 
   //// ###### push data source 1 ###########
     url = "http://s3.amazonaws.com/logtrust-static/test/test/data1.json";
+    url ="data1.json"
     var xhttp = new XMLHttpRequest();
     xhttp.open("GET", url);
 
-
+    //main thread call datasource 1
     xhttp.onreadystatechange = function() {
       if (this.readyState == 4 && this.status == 200) {
          datapoints = JSON.parse(this.responseText);
@@ -125,35 +129,21 @@
            return new MyObject(item.cat, formatDate(new Date(item.d)), item.value);
           });
 
-       myObjects.push(ds1);
+       myObjects.push(ds1); //push data into myObjects
 
-
-        getDS2("http://s3.amazonaws.com/logtrust-static/test/test/data2.json");
-
-        getDS3("https://s3.amazonaws.com/logtrust-static/test/test/data3.json")
+        //getDS2("http://s3.amazonaws.com/logtrust-static/test/test/data2.json");
+        getDS2("data2.json")
+        //getDS3("https://s3.amazonaws.com/logtrust-static/test/test/data3.json")
+        getDS3("data3.json")
 
         console.log("=====myObjects length " + myObjects.length)
-
-        //date
-        var dv = datapoints.map(function(item) {
-          return formatDate(new Date(item.d));
-        });
-        console.log("=======dateValuess======")
-        var dateValues = [];
-        for (const element of dv) { // Y
-          if(dateValues.indexOf(element) == -1) {
-            dateValues.push(element);
-          }
-        }
-
-        //console.log(datapoints);
-        label =  datapoints.map(function(item) {
-          return item.cat;
-        });
-      //  console.log(label);
+        /**categories*/
+        var catList = getFields(myObjects[0], "cat");
+        var catList2 = getFields(myObjects[1], "cat");
+        var catList3 = getFields(myObjects[2], "cat");
+        var catLists = catList.concat(catList2).concat(catList3);
         var categories = []
-        for (const element of label) { // You can use `let` instead of `const` if you like
-          //console.log(element.toUpperCase());
+        for (const element of catLists) {
           const v = element.toUpperCase();
           if(categories.indexOf(v) == -1) {
             categories.push(v);
@@ -161,45 +151,47 @@
         }
         console.log(categories);
 
-
-        function getValueByCat(cat, myObjects) {
+        // get value by category
+        function getValueByCat(cat, items, dateValues) {
 
           var catObjects = []
-          for (const item of myObjects) {
+          for (const item of items) {
             const v = item.cat.toUpperCase();
-            if (v == cat) {
+            //category and date
+            if (v == cat && dateValues.includes(item.d, 0)) {
               catObjects.push(item);
             }
           }
-          //date
-          // var dateValues2 = cat2Objects.map(function(item) {
-          //   return formatDate(new Date(item.d));
-          // });
-          //console.log("cat " + labelCat)
-          // date
           values = catObjects.map(function (item){
             return item.value
           })
           return values;
         }
-        ////////////////////////////////////////CAT2######
+        ///////////////////////group all items together //////////////######
+        //console.log("====myObjects : " + myObjects.length)
+        var items = Array.from(new Set(myObjects[0].map(JSON.stringify))).map(JSON.parse);
+        var items1 = Array.from(new Set(myObjects[1].map(JSON.stringify))).map(JSON.parse);
+        var items2 = Array.from(new Set(myObjects[2].map(JSON.stringify))).map(JSON.parse);
+        var allItems = [...items, ...items1, ...items2];
 
-        // var cat2Objects = []
-        // for (const item of myObjects) {
-        //   const v = item.cat.toUpperCase();
-        //   if (v == 'CAT 2') {
-        //     cat2Objects.push(item);
-        //   }
-        // }
-        // //date
-        // var dateValues2 = cat2Objects.map(function(item) {
-        //   return formatDate(new Date(item.d));
-        // });
-        // //console.log("cat " + labelCat)
-        // // date
-        // values2 = cat2Objects.map(function (item){
-        //   return item.value
-        // })
+        console.log("----cccc---")
+        console.log(allItems)
+        console.log("----ccc---")
+
+        console.log("=======dateValuess======")
+        var dateValues = [];
+        for (const element of allItems) { // Y
+          if(dateValues.indexOf(element.d) == -1) {
+            dateValues.push(element.d);
+          }
+        }
+        // sort date
+        dateValues.sort(function(a, b){
+          var aa = a.split('/').reverse().join(),
+              bb = b.split('/').reverse().join();
+          return aa < bb ? -1 : (aa > bb ? 1 : 0);
+        });
+
 
         ////////////Chart Object
         var chart = new Chart("myChart", {
@@ -212,49 +204,28 @@
             //   data: values,
             //   borderColor: "red",
             //   fill: false
-            // },
-            // {
-            //   label: 'CAT 2',
-            //   data: values2,
-            //   borderColor: "green",
-            //   fill: false
             // }
             ]
           },
           options: {
             legend: {display: true},
-            text: "Testing",
+            text: "Chart dashboard",
           }
         });
-
-        console.log("====myObjects : " + myObjects.length)
-
-        // var items =[]
-        // for (const myObject of myObjects) {
-        //   items.push(myObject)
-        //   console.log("xxxxx" + myObject.length)
-        // }
-        //
-        // console.log("====items : " + items[0].length)
-
-        var index =0;
-       for (const myObject of myObjects) {
-
-          console.log("xxxxx" + index + myObject)
-
-          for (const cat of categories) {
-            var values = getValueByCat(cat, myObject);
-            var object1 = {
-              label: cat,
-              data: values,
-              borderColor: COLORS[index++],
-              fill: false
-            }
-            chart.data.datasets.push(object1);
+        //////////////add datasets to the chart
+        var index = 0;
+        for (const cat of categories) {
+          var values = getValueByCat(cat, allItems, dateValues);
+          var object1 = {
+            label: cat,
+            data: values,
+            borderColor: COLORS[index++],
+            fill: false
           }
-       }
+          chart.data.datasets.push(object1);
+        }
 
-
+        //update chart to reflect the datasets
         chart.update()
       }
     };

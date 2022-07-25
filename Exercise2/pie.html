@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
+<body>
+<canvas id="myChart" style="width:100%;max-width:600px"></canvas>
+
+<script>
+  //Color list
+  var COLORS = [
+    '#4dc9f6',
+    '#f67019',
+    '#f53794',
+    '#537bc4',
+    '#acc236',
+    '#166a8f',
+    '#00a950',
+    '#58595b',
+    '#8549ba'
+  ];
+  var barColors = [
+    "#b91d47",
+    "#00aba9",
+    "#2b5797",
+    "#e8c3b9",
+    "#1e7145"
+  ];
+
+  /**MyObject to all datasource*/
+  function MyObject(cat, d, value) {
+    this.cat = cat;
+    this.d = d; // date value
+    this.value = value;
+  };
+
+  /**format date yyyy-mm-dd*/
+  function formatDate(date) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+
+    if (month.length < 2)
+      month = '0' + month;
+    if (day.length < 2)
+      day = '0' + day;
+
+    return [year, month, day].join('-');
+  }
+  //All myObjects [{cat,date,value}}
+  var myObjects = []
+
+  // parse Date value "CcoeoNR8 T4VSBd0GC fpAepuTD 5A40zJ6 y5bXBb rRxM 2015-06-08 J KA9FicdV BSbvirf #CAT 2#"
+  function parseRawToDate(value) {
+    result = value.split(/\d{4}-\d{2}-\d{2}/);
+    var yyyyMMdd=''
+    for(const item of result) {
+      yyyyMMdd = value.replace(item,'')
+      value = yyyyMMdd
+   //   console.log(yyyyMMdd)
+    }
+    return yyyyMMdd;
+  }
+
+ // parseRawToDate(value)
+
+  function parseRawCat(value) {
+    result = value.split(/#/);
+    for (const item of result) {
+      if (item.startsWith("CAT")) {
+        return item;
+      }
+    }
+  }
+
+  function getFields(input, field) {
+    var output = [];
+    for (var i = 0; i < input.length; ++i) {
+      output.push(input[i][field]);
+    }
+    return output;
+  }
+
+
+  //get datasource 3
+  function getDS3(url) {
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("GET", url, false);
+
+    xhttp.onreadystatechange = function () {
+      if (xhttp.readyState == 4 && xhttp.status == 200) {
+        var datapoints = JSON.parse(xhttp.responseText);
+        ds3= datapoints.map(function(item) {
+          return new MyObject(parseRawCat(item.raw), parseRawToDate(item.raw), item.val);
+
+        });
+        myObjects.push(ds3); // push result into objects
+      }
+    }
+    xhttp.send();
+  }
+
+  //get datasource 2
+  function getDS2(url) {
+    var xhttp2 = new XMLHttpRequest();
+    xhttp2.open("GET", url, false);
+
+    xhttp2.onreadystatechange = function () {
+      if (xhttp2.readyState == 4 && xhttp2.status == 200) {
+        var datapoints = JSON.parse(xhttp2.responseText);
+      //  console.log("DS2 " + datapoints)
+        ds2= datapoints.map(function(item) {
+          return new MyObject(item.categ, item.myDate, item.val);
+
+        });
+        myObjects.push(ds2);
+
+      }
+    }
+    xhttp2.send();
+  }
+
+    //// ###### push data source 1 ###########
+    url = "http://s3.amazonaws.com/logtrust-static/test/test/data1.json";
+    //url ="data1.json"
+    var xhttp = new XMLHttpRequest();
+    xhttp.open("GET", url);
+
+    //main thread call datasource 1
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+         datapoints = JSON.parse(this.responseText);
+
+         ds1= datapoints.map(function(item) {
+           return new MyObject(item.cat, formatDate(new Date(item.d)), item.value);
+          });
+
+       myObjects.push(ds1); //push data into myObjects
+
+        getDS2("http://s3.amazonaws.com/logtrust-static/test/test/data2.json");
+        //getDS2("data2.json")
+
+        getDS3("https://s3.amazonaws.com/logtrust-static/test/test/data3.json")
+        //getDS3("data3.json")
+
+        console.log("=====myObjects length " + myObjects.length)
+        /**categories*/
+        var catList = getFields(myObjects[0], "cat");
+        var catList2 = getFields(myObjects[1], "cat");
+        var catList3 = getFields(myObjects[2], "cat");
+        var catLists = catList.concat(catList2).concat(catList3);
+        var categories = []
+        for (const element of catLists) {
+          const v = element.toUpperCase();
+          if(categories.indexOf(v) == -1) {
+            categories.push(v);
+          }
+        }
+        console.log(categories);
+
+        // get value by category
+        function getTotalValueByCat(cat, items) {
+
+          var total = 0
+          for (const item of items) {
+            const v = item.cat.toUpperCase();
+            //category
+            if (v == cat) {
+               total += item.value
+            }
+          }
+          return total;
+        }
+        ///////////////////////group all items together //////////////######
+        //console.log("====myObjects : " + myObjects.length)
+        var items = Array.from(new Set(myObjects[0].map(JSON.stringify))).map(JSON.parse);
+        var items1 = Array.from(new Set(myObjects[1].map(JSON.stringify))).map(JSON.parse);
+        var items2 = Array.from(new Set(myObjects[2].map(JSON.stringify))).map(JSON.parse);
+        var allItems = [...items, ...items1, ...items2];
+
+        var data = new Array();
+        for (const cat of categories) {
+          data.push(getTotalValueByCat(cat, allItems));
+        }
+
+        ////////////Chart Object
+        var chart = new Chart("myChart", {
+          type: "pie",
+          data: {
+            labels: categories,
+            datasets: [{
+              backgroundColor: barColors,
+              data: data,
+
+            }]
+          },
+          options: {
+            legend: {display: true},
+            title: {
+              display: true,
+              text: "Categories"
+            }
+          }
+        });
+        //update chart to reflect the datasets
+        chart.update()
+      }
+    };
+
+  xhttp.send();
+
+
+
+</script>
